@@ -16,6 +16,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("mraco");
   const [slideDirection, setSlideDirection] = useState("right");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Nuovo stato per tema dark
 
   const currentOwner = getOwner(today);
 
@@ -36,6 +37,10 @@ export default function App() {
 
   const toggleTorch = () => {
     setIsTorchOn(!isTorchOn);
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   const getDayName = (date) => {
@@ -96,14 +101,36 @@ export default function App() {
   const imageData = getImageForView();
 
   return (
-    <div className="p-6 max-w-4xl mx-auto font-sans bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">
-          🔦 Torcia App v2.1
-        </h1>
+    <div className={`p-6 max-w-4xl mx-auto font-sans min-h-screen transition-colors duration-300 ${
+      isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+    }`}>
+      <div className={`rounded-lg shadow-lg p-6 transition-colors duration-300 ${
+        isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
+      }`}>
+        {/* Header con toggle tema */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-center flex-1">
+            🔦 Torcia App v2.1
+          </h1>
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
+              isDarkMode 
+                ? 'bg-yellow-500 hover:bg-yellow-400 text-gray-900' 
+                : 'bg-gray-800 hover:bg-gray-700 text-white'
+            }`}
+            title={isDarkMode ? 'Tema Chiaro' : 'Tema Scuro'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
         
         {/* Sezione proprietario */}
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded">
+        <div className={`border-l-4 p-4 mb-6 rounded transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-yellow-900 border-yellow-600 text-yellow-300' 
+            : 'bg-yellow-100 border-yellow-500 text-yellow-700'
+        }`}>
           <p className="text-lg">
             Oggi la torcia è di <strong className="text-xl">{currentOwner}</strong>!
           </p>
@@ -111,13 +138,17 @@ export default function App() {
 
         {/* Sezione torcia con tab */}
         <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 text-center">
+          <h2 className={`text-2xl font-semibold mb-4 text-center transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-800'
+          }`}>
             Dove si trova la Torcia
           </h2>
           
           {/* Tab Navigation - Solo le camere */}
           <div className="flex justify-center mb-6">
-            <div className="bg-gray-100 p-1 rounded-lg flex">
+            <div className={`p-1 rounded-lg flex transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+            }`}>
               <button
                 onClick={() => handleViewChange("mraco")}
                 disabled={isTabDisabled("mraco")}
@@ -125,7 +156,11 @@ export default function App() {
                   isTabDisabled("mraco")
                     ? "text-gray-400 cursor-not-allowed opacity-50"
                     : activeView === "mraco"
-                    ? "bg-white text-green-600 shadow-sm"
+                    ? isDarkMode 
+                      ? "bg-gray-600 text-green-400 shadow-sm" 
+                      : "bg-white text-green-600 shadow-sm"
+                    : isDarkMode
+                    ? "text-gray-300 hover:text-gray-100"
                     : "text-gray-600 hover:text-gray-800"
                 } ${currentOwner === "Mraco" && !isTabDisabled("mraco") ? "ring-2 ring-green-300" : ""}`}
               >
@@ -149,7 +184,11 @@ export default function App() {
                   isTabDisabled("bosca")
                     ? "text-gray-400 cursor-not-allowed opacity-50"
                     : activeView === "bosca"
-                    ? "bg-white text-purple-600 shadow-sm"
+                    ? isDarkMode 
+                      ? "bg-gray-600 text-purple-400 shadow-sm" 
+                      : "bg-white text-purple-600 shadow-sm"
+                    : isDarkMode
+                    ? "text-gray-300 hover:text-gray-100"
                     : "text-gray-600 hover:text-gray-800"
                 } ${currentOwner === "Bosca" && !isTabDisabled("bosca") ? "ring-2 ring-purple-300" : ""}`}
               >
@@ -170,7 +209,9 @@ export default function App() {
 
           {/* Messaggio informativo quando ci sono tab disabilitati */}
           <div className="text-center mb-4">
-            <p className="text-sm text-gray-600">
+            <p className={`text-sm transition-colors duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               🔒 La torcia si trova solo dove è il proprietario del giorno
             </p>
           </div>
@@ -182,7 +223,9 @@ export default function App() {
                 slideDirection === "right" ? "translate-x-0" : "translate-x-0"
               }`}
             >
-              <div className="bg-gray-100 p-8 rounded-lg shadow-inner text-center">
+              <div className={`p-8 rounded-lg shadow-inner text-center transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
                 {imageData && (
                   <img 
                     src={imageData.src}
@@ -232,7 +275,9 @@ export default function App() {
 
         {/* Sezione calendario */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+          <h2 className={`text-2xl font-semibold mb-4 transition-colors duration-300 ${
+            isDarkMode ? 'text-gray-100' : 'text-gray-800'
+          }`}>
             📅 Calendario della Torcia
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -241,16 +286,24 @@ export default function App() {
                 key={date}
                 className={`p-4 rounded-lg shadow-sm border transition-all duration-200 hover:shadow-md ${
                   isToday 
-                    ? "bg-blue-50 border-blue-300 shadow-md" 
+                    ? isDarkMode
+                      ? "bg-blue-900 border-blue-600 shadow-md text-blue-100" 
+                      : "bg-blue-50 border-blue-300 shadow-md"
+                    : isDarkMode
+                    ? "bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-100"
                     : "bg-white border-gray-200 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <div className="font-semibold text-gray-800">
+                    <div className={`font-semibold transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-100' : 'text-gray-800'
+                    }`}>
                       {format(date, "dd/MM/yyyy")}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className={`text-sm transition-colors duration-300 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
                       {getDayName(date)}
                     </div>
                   </div>
@@ -261,7 +314,11 @@ export default function App() {
                       {owner}
                     </div>
                     {isToday && (
-                      <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                      <div className={`text-xs px-2 py-1 rounded-full transition-colors duration-300 ${
+                        isDarkMode 
+                          ? 'bg-blue-800 text-blue-200' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
                         OGGI
                       </div>
                     )}
@@ -273,7 +330,9 @@ export default function App() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-gray-500 text-sm">
+        <div className={`text-center mt-8 text-sm transition-colors duration-300 ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           <p>Torcia App v2.1 - Sistema di gestione torcia condivisa con controllo modale</p>
         </div>
       </div>
@@ -306,9 +365,13 @@ export default function App() {
           `}</style>
           
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className={`rounded-lg shadow-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
+          }`}>
             <div className="text-center">
-              <h3 className="text-2xl font-bold mb-6 text-gray-800">
+              <h3 className={`text-2xl font-bold mb-6 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-100' : 'text-gray-800'
+              }`}>
                 🔦 Controllo Torcia
               </h3>
               
@@ -363,8 +426,10 @@ export default function App() {
               </div>
 
               {/* Stato attuale */}
-              <p className="mb-4 text-gray-600">
-                Stato: <span className={`font-semibold ${isTorchOn ? "text-green-600" : "text-gray-500"}`}>
+              <p className={`mb-4 transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-600'
+              }`}>
+                Stato: <span className={`font-semibold ${isTorchOn ? "text-green-600" : isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
                   {isTorchOn ? "ACCESA ✨" : "SPENTA"}
                 </span>
               </p>
@@ -384,7 +449,11 @@ export default function App() {
                 
                 <button
                   onClick={closeTorchModal}
-                  className="w-full px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-all duration-200"
+                  className={`w-full px-6 py-3 font-semibold rounded-lg transition-all duration-200 ${
+                    isDarkMode 
+                      ? 'bg-gray-600 hover:bg-gray-700 text-gray-100' 
+                      : 'bg-gray-500 hover:bg-gray-600 text-white'
+                  }`}
                 >
                   ❌ Chiudi
                 </button>
