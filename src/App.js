@@ -17,6 +17,7 @@ export default function App() {
   const [slideDirection, setSlideDirection] = useState("right");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false); // Nuovo stato per tema dark
+  const [breadStatus, setBreadStatus] = useState("caricamento..."); // Stato per pane bianco
 
   const currentOwner = getOwner(today);
 
@@ -54,18 +55,26 @@ export default function App() {
     // Controlla se il tab è disabilitato
     if (isTabDisabled(newView)) return;
     
-    const viewOrder = ["mraco", "bosca"];
+    const viewOrder = ["mraco", "bosca", "pane"];
     const currentIndex = viewOrder.indexOf(activeView);
     const newIndex = viewOrder.indexOf(newView);
     
     setSlideDirection(newIndex > currentIndex ? "right" : "left");
     setActiveView(newView);
+    
+    // Se stiamo andando alla tab pane, carica i dati
+    if (newView === "pane") {
+      fetchBreadStatus();
+    }
   };
 
   const isTabDisabled = (view) => {
     // Solo il tab del proprietario attuale è abilitato
     if (view === "mraco" && currentOwner === "Mraco") return false;
     if (view === "bosca" && currentOwner === "Bosca") return false;
+    
+    // La tab pane è sempre abilitata
+    if (view === "pane") return false;
     
     // Tutti gli altri tab sono disabilitati
     return true;
@@ -98,6 +107,40 @@ export default function App() {
     setIsModalOpen(false);
   };
 
+  // Funzione per leggere stato pane bianco da Google Sheets
+  const fetchBreadStatus = async () => {
+    setBreadStatus("caricamento...");
+    try {
+      const SHEET_ID = '1SKFaDCcdefFF0dNEJrCyZUfzT7-22FkNDvD5F6JjbyY';
+      const API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
+      const RANGE = 'A1'; // Cella che contiene SI/NO
+      
+      if (!API_KEY) {
+        throw new Error('API Key non configurata');
+      }
+      
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.values && data.values[0] && data.values[0][0]) {
+        const value = data.values[0][0].toString().toUpperCase().trim();
+        // Accetta SI, SÌ, YES, Y, 1 come positivi
+        if (['SI', 'SÌ', 'YES', 'Y', '1'].includes(value)) {
+          setBreadStatus('SI');
+        } else {
+          setBreadStatus('NO');
+        }
+      } else {
+        setBreadStatus('NO'); // Cella vuota = no pane
+      }
+    } catch (error) {
+      console.error('Errore nel leggere stato pane:', error);
+      setBreadStatus('errore');
+    }
+  };
+
   const imageData = getImageForView();
 
   return (
@@ -107,11 +150,30 @@ export default function App() {
       <div className={`rounded-lg shadow-lg p-6 transition-colors duration-300 ${
         isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
       }`}>
-        {/* Header con toggle tema */}
+        {/* Header con toggle tema e pulsante pane */}
         <div className="flex justify-between items-center mb-6">
+          {/* Pulsante Verifica Pane Bianco a sinistra */}
+          <button
+            onClick={() => handleViewChange("pane")}
+            className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
+              activeView === "pane"
+              ? isDarkMode 
+                ? "bg-orange-600 text-white shadow-lg" 
+                : "bg-orange-500 text-white shadow-lg"
+              : isDarkMode
+              ? "bg-gray-700 text-orange-400 hover:bg-gray-600 border border-orange-400"
+              : "bg-white text-orange-600 hover:bg-orange-50 border border-orange-300 shadow-sm"
+            }`}
+            title="Verifica Pane Bianco"
+          >
+            🍞
+          </button>
+          
           <h1 className="text-3xl font-bold text-center flex-1">
             🔦 Torcia App v2.1
           </h1>
+          
+          {/* Toggle tema a destra */}
           <button
             onClick={toggleDarkMode}
             className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 ${
@@ -174,103 +236,172 @@ export default function App() {
                   <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded-full">
                     🚫
                   </span>
-                )}
-              </button>
-              
-              <button
-                onClick={() => handleViewChange("bosca")}
-                disabled={isTabDisabled("bosca")}
-                className={`px-4 py-2 rounded-md font-medium transition-all duration-200 relative ${
-                  isTabDisabled("bosca")
-                    ? "text-gray-400 cursor-not-allowed opacity-50"
-                    : activeView === "bosca"
-                    ? isDarkMode 
-                      ? "bg-gray-600 text-purple-400 shadow-sm" 
-                      : "bg-white text-purple-600 shadow-sm"
-                    : isDarkMode
-                    ? "text-gray-300 hover:text-gray-100"
-                    : "text-gray-600 hover:text-gray-800"
-                } ${currentOwner === "Bosca" && !isTabDisabled("bosca") ? "ring-2 ring-purple-300" : ""}`}
-              >
-                🏠 Camera Bosca
-                {currentOwner === "Bosca" && !isTabDisabled("bosca") && (
-                  <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs px-1 py-0.5 rounded-full">
-                    OGGI
-                  </span>
-                )}
-                {isTabDisabled("bosca") && (
-                  <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded-full">
-                    🚫
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Messaggio informativo quando ci sono tab disabilitati */}
-          <div className="text-center mb-4">
-            <p className={`text-sm transition-colors duration-300 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
-              🔒 La torcia si trova solo dove è il proprietario del giorno
-            </p>
-          </div>
-
-          {/* Image Container with slide animation */}
-          <div className="relative overflow-hidden">
-            <div 
-              className={`transform transition-transform duration-300 ease-in-out ${
-                slideDirection === "right" ? "translate-x-0" : "translate-x-0"
-              }`}
-            >
-              <div className={`p-8 rounded-lg shadow-inner text-center transition-colors duration-300 ${
-                isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
-                {imageData && (
-                  <img 
-                    src={imageData.src}
-                    alt={imageData.alt}
-                    className={`${imageData.className} mx-auto mb-6 transition-all duration-300 shadow-lg`}
-                  />
-                )}
+                )}              
+                </button>
                 
-                {/* Info e pulsante per usare la torcia */}
-                {activeView === "mraco" && (
-                  <div>
-                    <p className="text-lg text-green-700 font-semibold mb-2">
-                      📍 Torcia nella camera di Mraco
-                    </p>
-                    <p className="text-xs text-green-600 mb-4 font-medium">
-                      ✅ Disponibile oggi
-                    </p>
-                    <button
-                      onClick={openTorchModal}
-                      className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-                    >
-                      🔦 Usa la Torcia
-                    </button>
-                  </div>
-                )}
-                
-                {activeView === "bosca" && (
-                  <div>
-                    <p className="text-lg text-purple-700 font-semibold mb-2">
-                      📍 Torcia nella camera di Bosca
-                    </p>
-                    <p className="text-xs text-purple-600 mb-4 font-medium">
-                      ✅ Disponibile oggi
-                    </p>
-                    <button
-                      onClick={openTorchModal}
-                      className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-                    >
-                      🔦 Usa la Torcia
-                    </button>
-                  </div>
-                )}
+                <button
+                  onClick={() => handleViewChange("bosca")}
+                  disabled={isTabDisabled("bosca")}
+                  className={`px-4 py-2 rounded-md font-medium transition-all duration-200 relative ${
+                    isTabDisabled("bosca")
+                      ? "text-gray-400 cursor-not-allowed opacity-50"
+                      : activeView === "bosca"
+                      ? isDarkMode 
+                        ? "bg-gray-600 text-purple-400 shadow-sm" 
+                        : "bg-white text-purple-600 shadow-sm"
+                      : isDarkMode
+                      ? "text-gray-300 hover:text-gray-100"
+                      : "text-gray-600 hover:text-gray-800"
+                  } ${currentOwner === "Bosca" && !isTabDisabled("bosca") ? "ring-2 ring-purple-300" : ""}`}
+                >
+                  🏠 Camera Bosca
+                  {currentOwner === "Bosca" && !isTabDisabled("bosca") && (
+                    <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs px-1 py-0.5 rounded-full">
+                      OGGI
+                    </span>
+                  )}
+                  {isTabDisabled("bosca") && (
+                    <span className="absolute -top-1 -right-1 bg-gray-400 text-white text-xs px-1 py-0.5 rounded-full">
+                      🚫
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
-          </div>
+
+          {/* Messaggio informativo quando ci sono tab disabilitati - Solo per tab torce */}
+          {activeView !== "pane" && (
+            <div className="text-center mb-4">
+              <p className={`text-sm transition-colors duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                🔒 La torcia si trova solo dove è il proprietario del giorno
+              </p>
+            </div>
+          )}
+
+          {/* Image Container with slide animation - Solo per torce */}
+          {activeView !== "pane" && (
+            <div className="relative overflow-hidden">
+              <div 
+                className={`transform transition-transform duration-300 ease-in-out ${
+                  slideDirection === "right" ? "translate-x-0" : "translate-x-0"
+                }`}
+              >
+                <div className={`p-8 rounded-lg shadow-inner text-center transition-colors duration-300 ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+                }`}>
+                  {imageData && (
+                    <img 
+                      src={imageData.src}
+                      alt={imageData.alt}
+                      className={`${imageData.className} mx-auto mb-6 transition-all duration-300 shadow-lg`}
+                    />
+                  )}
+                  
+                  {/* Info e pulsante per usare la torcia */}
+                  {activeView === "mraco" && (
+                    <div>
+                      <p className="text-lg text-green-700 font-semibold mb-2">
+                        📍 Torcia nella camera di Mraco
+                      </p>
+                      <p className="text-xs text-green-600 mb-4 font-medium">
+                        ✅ Disponibile oggi
+                      </p>
+                      <button
+                        onClick={openTorchModal}
+                        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                      >
+                        🔦 Usa la Torcia
+                      </button>
+                    </div>
+                  )}
+                  
+                  {activeView === "bosca" && (
+                    <div>
+                      <p className="text-lg text-purple-700 font-semibold mb-2">
+                        📍 Torcia nella camera di Bosca
+                      </p>
+                      <p className="text-xs text-purple-600 mb-4 font-medium">
+                        ✅ Disponibile oggi
+                      </p>
+                      <button
+                        onClick={openTorchModal}
+                        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                      >
+                        🔦 Usa la Torcia
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Sezione dedicata Pane Bianco - Più spazio e centrale */}
+          {activeView === "pane" && (
+            <div className={`mt-8 p-8 rounded-lg shadow-inner transition-colors duration-300 ${
+              isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
+            }`}>
+              <div className="max-w-2xl mx-auto text-center">
+                <h3 className={`text-3xl font-bold mb-8 transition-colors duration-300 ${
+                  isDarkMode ? 'text-orange-400' : 'text-orange-700'
+                }`}>
+                  🍞 Stato Pane Bianco
+                </h3>
+                
+                <div className={`text-center p-8 rounded-xl mb-8 transition-all duration-300 ${
+                  breadStatus === "SI" 
+                    ? isDarkMode 
+                      ? 'bg-green-900 border-2 border-green-600 shadow-lg'
+                      : 'bg-green-100 border-2 border-green-300 shadow-lg'
+                    : breadStatus === "NO"
+                    ? isDarkMode
+                      ? 'bg-red-900 border-2 border-red-600 shadow-lg'
+                      : 'bg-red-100 border-2 border-red-300 shadow-lg'
+                    : isDarkMode
+                    ? 'bg-gray-600 border-2 border-gray-500 shadow-lg'
+                    : 'bg-gray-200 border-2 border-gray-300 shadow-lg'
+                }`}>
+                  {breadStatus === "caricamento..." && (
+                    <div className={`text-xl font-semibold animate-pulse ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    }`}>
+                      🔄 Caricamento...
+                    </div>
+                  )}
+                  {breadStatus === "SI" && (
+                    <div className={`text-3xl font-bold ${
+                      isDarkMode ? 'text-green-300' : 'text-green-700'
+                    }`}>
+                      ✅ PANE BIANCO DISPONIBILE
+                    </div>
+                  )}
+                  {breadStatus === "NO" && (
+                    <div className={`text-3xl font-bold ${
+                      isDarkMode ? 'text-red-300' : 'text-red-700'
+                    }`}>
+                      ❌ PANE BIANCO FINITO
+                    </div>
+                  )}
+                  {breadStatus === "errore" && (
+                    <div className={`text-xl font-semibold ${
+                      isDarkMode ? 'text-yellow-300' : 'text-yellow-700'
+                    }`}>
+                      ⚠️ Errore nel caricamento
+                    </div>
+                  )}
+                </div>
+                
+                <button
+                  onClick={fetchBreadStatus}
+                  className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-lg rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
+                >
+                  🔄 Aggiorna Stato
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sezione calendario */}
