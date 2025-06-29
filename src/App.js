@@ -16,7 +16,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("mraco");
   const [slideDirection, setSlideDirection] = useState("right");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Nuovo stato per tema dark
+  const [isDarkMode, setIsDarkMode] = useState(true); // Nuovo stato per tema dark
   const [breadStatus, setBreadStatus] = useState("caricamento..."); // Stato per pane bianco
 
   const currentOwner = getOwner(today);
