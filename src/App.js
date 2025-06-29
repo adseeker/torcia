@@ -144,7 +144,7 @@ export default function App() {
   const imageData = getImageForView();
 
   return (
-    <div className={`p-6 max-w-4xl mx-auto font-sans min-h-screen transition-colors duration-300 ${
+    <div className={`p-6 w-full font-sans min-h-screen transition-colors duration-300 ${
       isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
     }`}>
       <div className={`rounded-lg shadow-lg p-6 transition-colors duration-300 ${
