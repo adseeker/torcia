@@ -1,0 +1,13 @@
+# 🚀 Torcia App v2.2 - Quick Deploy Commands
+
+# Opzione 1: Comando singolo (veloce)
+git add . && git commit -m "Add compass feature v2.2 with manual fallback" && git pull origin main && git push origin main
+
+# Opzione 2: Step by step (più sicuro)
+git add .
+git commit -m "Add compass feature v2.2 with manual fallback"
+git pull origin main
+git push origin main
+
+# Opzione 3: Se ci sono conflitti irrisolvibili (ATTENZIONE: sovrascrive il remoto)
+git push origin main --force
